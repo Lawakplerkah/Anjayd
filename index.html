@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GitHub User Management</title>
+  <style>
+    body { font-family: Arial, sans-serif; }
+    h1 { color: #4CAF50; }
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+    table, th, td { border: 1px solid #ddd; }
+    th, td { padding: 8px; text-align: center; }
+    button { padding: 8px 12px; margin: 10px 0; cursor: pointer; }
+    .update-button { background-color: #4CAF50; color: white; }
+    .delete-button { background-color: red; color: white; }
+  </style>
+</head>
+<body>
+
+  <h1>User Management</h1>
+  <button onclick="getUsers()">Refresh Data</button>
+
+  <table id="userTable">
+    <thead>
+      <tr>
+        <th>Username</th>
+        <th>Phone Number</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      <!-- Data users akan dimuat di sini -->
+    </tbody>
+  </table>
+
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
