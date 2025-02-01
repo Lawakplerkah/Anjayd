@@ -3,171 +3,123 @@ const GITHUB_REPO = "Lawakplerkah/Security-";
 const FILE_PATH = "allowed.json";
 const GITHUB_TOKEN = "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"; // Ganti dengan token GitHub Anda
 
-// Ambil data user dan session dari GitHub
-async function getUsers() {
-  try {
-    const response = await axios.get(DATABASE_URL);
-    const data = response.data;
-    if (data) {
-      displayUsers(data.users);
-      displaySessions(data.sessions);
-    } else {
-      alert("No data found.");
-    }
-  } catch (error) {
-    alert("Failed to fetch users from GitHub!");
-    console.error(error);
-  }
-}
-
-// Menampilkan data users di tabel
-function displayUsers(users) {
-  const tableBody = document.querySelector("#userTable tbody");
-  tableBody.innerHTML = ""; // Kosongkan tabel sebelum diisi
-
-  users.forEach((user, index) => {
-    const row = document.createElement("tr");
-
-    row.innerHTML = `
-      <td>${user.username}</td>
-      <td>${user.phoneNumber}</td>
-      <td>
-        <button class="update-button" onclick="updateUser(${index})">Update</button>
-        <button class="delete-button" onclick="deleteUser(${index})">Delete</button>
-      </td>
-    `;
-    tableBody.appendChild(row);
-  });
-}
-
-// Menampilkan data sessions di tabel
-function displaySessions(sessions) {
-  const tableBody = document.querySelector("#sessionTable tbody");
-  tableBody.innerHTML = ""; // Kosongkan tabel sebelum diisi
-
-  sessions.forEach((session, index) => {
-    const row = document.createElement("tr");
-
-    row.innerHTML = `
-      <td>${session.username}</td>
-      <td>${session.phoneNumber}</td>
-      <td>
-        <button class="update-button" onclick="updateSession(${index})">Update</button>
-        <button class="delete-button" onclick="deleteSession(${index})">Delete</button>
-      </td>
-    `;
-    tableBody.appendChild(row);
-  });
-}
-
-// Update user data di GitHub
-async function updateUser(index) {
-  const newPhoneNumber = prompt("Enter new phone number:");
-
-  if (newPhoneNumber) {
+// Fungsi untuk mendapatkan data dari GitHub
+async function getData() {
     try {
-      const response = await axios.get(DATABASE_URL);
-      const data = response.data;
+        const response = await axios.get(DATABASE_URL);
+        const data = response.data;
 
-      // Update user phone number
-      data.users[index].phoneNumber = newPhoneNumber;
-
-      await updateGitHub(data);
-      alert("User updated successfully!");
-      getUsers(); // Refresh user data
+        if (data && data.users) {
+            displayData(data.users);
+        } else {
+            alert("No data found.");
+        }
     } catch (error) {
-      alert("Failed to update user!");
-      console.error(error);
+        console.error("Error fetching data:", error);
+        alert("Failed to load data.");
     }
-  }
 }
 
-// Delete user data dari GitHub
-async function deleteUser(index) {
-  if (confirm("Are you sure you want to delete this user?")) {
+// Fungsi untuk menampilkan data ke dalam tabel
+function displayData(users) {
+    const tableBody = document.querySelector("#userTable tbody");
+    tableBody.innerHTML = ""; // Reset table
+
+    users.forEach(user => {
+        const row = document.createElement("tr");
+        row.innerHTML = `
+            <td>${user.username}</td>
+            <td>${user.password}</td>
+            <td>${user.phoneNumber || "N/A"}</td>
+            <td>
+                <button class="button" onclick="editUser('${user.username}')">Edit</button>
+                <button class="button" onclick="deleteUser('${user.username}')">Delete</button>
+            </td>
+        `;
+        tableBody.appendChild(row);
+    });
+}
+
+// Fungsi untuk mengedit user
+function editUser(username) {
+    const newPhone = prompt("Enter new phone number:");
+    if (newPhone) {
+        updateUser(username, newPhone);
+    }
+}
+
+// Fungsi untuk mengupdate data user ke GitHub
+async function updateUser(username, newPhone) {
     try {
-      const response = await axios.get(DATABASE_URL);
-      const data = response.data;
+        const response = await axios.get(DATABASE_URL);
+        const data = response.data;
 
-      // Hapus data user
-      data.users.splice(index, 1);
+        const userIndex = data.users.findIndex(user => user.username === username);
+        if (userIndex !== -1) {
+            data.users[userIndex].phoneNumber = newPhone;
 
-      await updateGitHub(data);
-      alert("User deleted successfully!");
-      getUsers(); // Refresh user data
+            // Update data di GitHub
+            await updateGitHub(data);
+            alert("User updated successfully.");
+            getData(); // Refresh data
+        }
     } catch (error) {
-      alert("Failed to delete user!");
-      console.error(error);
+        console.error("Error updating user:", error);
+        alert("Failed to update user.");
     }
-  }
 }
 
-// Update session data di GitHub
-async function updateSession(index) {
-  const newPhoneNumber = prompt("Enter new phone number:");
+// Fungsi untuk menghapus user
+async function deleteUser(username) {
+    const confirmDelete = confirm("Are you sure you want to delete this user?");
+    if (confirmDelete) {
+        try {
+            const response = await axios.get(DATABASE_URL);
+            const data = response.data;
 
-  if (newPhoneNumber) {
-    try {
-      const response = await axios.get(DATABASE_URL);
-      const data = response.data;
+            // Filter out the user to delete
+            data.users = data.users.filter(user => user.username !== username);
 
-      // Update session phone number
-      data.sessions[index].phoneNumber = newPhoneNumber;
-
-      await updateGitHub(data);
-      alert("Session updated successfully!");
-      getUsers(); // Refresh session data
-    } catch (error) {
-      alert("Failed to update session!");
-      console.error(error);
+            // Update data di GitHub
+            await updateGitHub(data);
+            alert("User deleted successfully.");
+            getData(); // Refresh data
+        } catch (error) {
+            console.error("Error deleting user:", error);
+            alert("Failed to delete user.");
+        }
     }
-  }
 }
 
-// Delete session data dari GitHub
-async function deleteSession(index) {
-  if (confirm("Are you sure you want to delete this session?")) {
-    try {
-      const response = await axios.get(DATABASE_URL);
-      const data = response.data;
-
-      // Hapus data session
-      data.sessions.splice(index, 1);
-
-      await updateGitHub(data);
-      alert("Session deleted successfully!");
-      getUsers(); // Refresh session data
-    } catch (error) {
-      alert("Failed to delete session!");
-      console.error(error);
-    }
-  }
-}
-
-// Mengupdate data ke GitHub
+// Fungsi untuk memperbarui data ke GitHub
 async function updateGitHub(updatedData) {
-  const apiUrl = `https://api.github.com/repos/${GITHUB_REPO}/contents/${FILE_PATH}`;
+    const apiUrl = `https://api.github.com/repos/${GITHUB_REPO}/contents/${FILE_PATH}`;
 
-  try {
-    const fileResponse = await axios.get(apiUrl, {
-      headers: { Authorization: `token ${GITHUB_TOKEN}` }
-    });
-    const sha = fileResponse.data.sha;
+    try {
+        // Ambil sha dari file yang ada
+        const fileResponse = await axios.get(apiUrl, {
+            headers: { Authorization: `token ${GITHUB_TOKEN}` }
+        });
+        const sha = fileResponse.data.sha;
 
-    const content = Buffer.from(JSON.stringify(updatedData, null, 2)).toString('base64');
+        // Encode data ke base64
+        const content = btoa(unescape(encodeURIComponent(JSON.stringify(updatedData, null, 2))));
 
-    await axios.put(apiUrl, {
-      message: "Update user and session data",
-      content,
-      sha
-    }, {
-      headers: { Authorization: `token ${GITHUB_TOKEN}` }
-    });
-  } catch (error) {
-    alert("Failed to update database on GitHub.");
-    console.error(error);
-  }
+        // Kirim update ke GitHub
+        await axios.put(apiUrl, {
+            message: "Update user data",
+            content,
+            sha
+        }, {
+            headers: { Authorization: `token ${GITHUB_TOKEN}` }
+        });
+
+        console.log("Data updated successfully on GitHub!");
+    } catch (error) {
+        console.error("Error updating GitHub:", error);
+        alert("Failed to update GitHub.");
+    }
 }
 
-// Initial data load
-getUsers();
+// Panggil fungsi getData ketika halaman dimuat
+window.onload = getData;
