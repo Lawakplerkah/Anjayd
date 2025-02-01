@@ -86,7 +86,7 @@
   </table>
 
   <script>
-    const DATABASE_URL = "https://raw.githubusercontent.com/Lawakplerkah/Security-/main/allowed.json";
+    const DATABASE_URL = "https://api.github.com/repos/Lawakplerkah/Security-/contents/allowed.json";
     const GITHUB_REPO = "Lawakplerkah/Security-";
     const FILE_PATH = "allowed.json";
     const GITHUB_TOKEN = "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"; // Ganti dengan token GitHub Anda
@@ -94,15 +94,25 @@
     // Fungsi untuk mengambil data dari GitHub
     async function fetchDatabase() {
       document.getElementById("loading").style.display = 'block';
-      const response = await fetch(DATABASE_URL);
-      if (!response.ok) {
-        document.getElementById("message").innerText = "Failed to load data from GitHub!";
-        return;
+      try {
+        const response = await fetch(DATABASE_URL, {
+          headers: { Authorization: `token ${GITHUB_TOKEN}` }
+        });
+
+        if (!response.ok) {
+          throw new Error("Failed to load data from GitHub!");
+        }
+
+        const data = await response.json();
+        const content = atob(data.content); // Decode konten dari base64
+        const users = JSON.parse(content); // Parse data JSON
+
+        document.getElementById("loading").style.display = 'none';
+        document.getElementById("usersTable").style.display = 'block';
+        displayUsers(users.users);
+      } catch (error) {
+        document.getElementById("message").innerText = error.message;
       }
-      const data = await response.json();
-      document.getElementById("loading").style.display = 'none';
-      document.getElementById("usersTable").style.display = 'block';
-      displayUsers(data.users);
     }
 
     // Fungsi untuk menampilkan data users di tabel
@@ -132,27 +142,37 @@
         return;
       }
 
-      const response = await fetch(DATABASE_URL);
+      const response = await fetch(DATABASE_URL, {
+        headers: { Authorization: `token ${GITHUB_TOKEN}` }
+      });
+
       const data = await response.json();
-      const user = data.users[index];
+      const content = atob(data.content);
+      const users = JSON.parse(content);
+      const user = users.users[index];
 
       // Update data user
       user.username = newUsername;
       user.phoneNumber = newPhoneNumber;
 
       // Push data kembali ke GitHub
-      await updateDatabase(data);
+      await updateDatabase(users);
     }
 
     // Fungsi untuk menghapus data user
     async function deleteUser(index) {
       if (confirm("Are you sure you want to delete this user?")) {
-        const response = await fetch(DATABASE_URL);
+        const response = await fetch(DATABASE_URL, {
+          headers: { Authorization: `token ${GITHUB_TOKEN}` }
+        });
+
         const data = await response.json();
-        data.users.splice(index, 1); // Hapus user dari array
+        const content = atob(data.content);
+        const users = JSON.parse(content);
+        users.users.splice(index, 1); // Hapus user dari array
 
         // Push data kembali ke GitHub
-        await updateDatabase(data);
+        await updateDatabase(users);
       }
     }
 
